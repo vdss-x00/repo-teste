@@ -1,6 +1,6 @@
 {
   "name": "nova-pasta",
-  "version": "1.0.0",
+  "version": "^1.0.0",
   "description": "Disciplina de desenvolvimento back-end do curso de Engenharia de Software do UniSenai PR",
   "keywords": [
     "Back-end",
@@ -31,5 +31,9 @@
     "@types/node": "^26.2.0",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1"
   }
 }
