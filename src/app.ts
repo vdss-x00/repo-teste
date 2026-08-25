@@ -1,53 +1,133 @@
 import express from "express";
+import { randomUUID } from "node:crypto";
 
 const app = express();
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.status(200).json({
-        message: "Sistema Plataforma Philia",
-    })
-})
+const pizzaCategoryId = randomUUID();
+const drinkCategoryId = randomUUID();
 
-const campanhas = [
-    {
-        id: 1,
-        nomeFundador: "Nome1",
-        categoria: "Tragédia Humanitária",
-        descricao: "Doe para ajudar as pessoas afetadas!",
-        aceitaDoacao: true
-    },
-    {
-        id: 2,
-        nomeFundador: "Nome2",
-        categoria: "Doença",
-        descricao: "",
-        aceitaDoacao: true
-    }
+const categories = [
+  {
+    id: randomUUID(),
+    name: "Pizzas",
+    description:
+      "Pizzas salgadas com diferentes sabores, tamanhos e combinações de ingredientes.",
+  },
+  {
+    id: randomUUID(),
+    name: "Bebidas",
+    description:
+      "Bebidas para acompanhar as pizzas, incluindo refrigerantes, sucos e água.",
+  },
+  {
+    id: randomUUID(),
+    name: "Sobremesas",
+    description:
+      "Opções doces para finalizar a refeição, como pizzas doces, sorvetes e sobremesas especiais.",
+  },
 ];
 
-const blog = [
-    {
-        titulo1: "Quem Somos",
-        paragrafo: "Nós somos uma plataforma de angariação de fundos para as mais variadas causas. Seja para ajudar vítimas de desastres naturais, pacientes de doenças, ou outros, estamos sempre aptos para ajudar!"
-    }
-]
+const products = [
+  {
+    id: 1,
+    categoryId: pizzaCategoryId,
+    name: "Calabresa",
+    description:
+      "Pizza com molho de tomate, muçarela, calabresa fatiada e cebola.",
+    price: 45.9,
+  },
+  {
+    id: 2,
+    categoryId: pizzaCategoryId,
+    name: "Frango com Catupiry",
+    description:
+      "Pizza com molho de tomate, muçarela, frango desfiado e catupiry.",
+    price: 49.9,
+  },
+  {
+    id: 3,
+    categoryId: pizzaCategoryId,
+    name: "Margherita",
+    description:
+      "Pizza com molho de tomate, muçarela, tomate e manjericão fresco.",
+    price: 44.9,
+  },
+  {
+    id: 4,
+    categoryId: drinkCategoryId,
+    name: "Coca-Cola 2L",
+    description: "Refrigerante Coca-Cola em garrafa de 2 litros.",
+    price: 12.9,
+  },
+  {
+    id: 5,
+    categoryId: drinkCategoryId,
+    name: "Suco de Laranja",
+    description: "Suco natural de laranja, servido gelado.",
+    price: 9.9,
+  },
+  {
+    id: 6,
+    categoryId: pizzaCategoryId,
+    name: "Pizza de Chocolate",
+    description: "Pizza doce com chocolate cremoso e granulado.",
+    price: 39.9,
+  },
+];
 
-app.get("/sobre-nos", (req, res) => {
-    res.status(200).json(blog)
-})
 
-app.get("/campanhas", (req, res) => {
-    res.status(200).json(campanhas)
-})
 
-app.post("/campanhas", (req, res) => {
-    const campaign = req.body;
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Restaurant Ordering System API",
+    version: "1.0.0",
+  });
+});
 
-    campanhas.push(campaign);
 
-    res.status(201).json(campaign)
-})
+
+app.get("/categories", (req, res) => {
+  res.status(200).json(categories);
+});
+
+app.get("/categories/:id", (req, res) => {
+  const category = categories.find((category) => {
+    return category.id == req.params.id;
+  });
+
+  if (!category) {
+    return res.status(404).json({
+      message: "Categoria não encontrada.",
+    });
+  }
+
+  res.status(200).json(category);
+});
+
+app.post("/categories", (req, res) => {
+  const category = {
+    id: randomUUID(),
+    ...req.body,
+};
+  categories.push(category);
+  res.status(201).json(category);
+});
+
+
+
+
+//========PRODUCTS========
+app.get("/products", (req, res) => {
+  res.status(200).json(products);
+});
+
+app.post("/products", (req, res) => {
+  const product = req.body;
+  products.push(product);
+  res.status(201).json(product);
+});
+//========================
 
 export default app;
