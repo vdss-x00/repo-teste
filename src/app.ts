@@ -89,7 +89,16 @@ app.get("/", (req, res) => {
 
 
 app.get("/categories", (req, res) => {
-  res.status(200).json(categories);
+    res.status(200).json(categories);
+});
+
+app.post("/categories", (req, res) => {
+  const category = {
+    id: randomUUID(),
+    ...req.body,
+};
+  categories.push(category);
+  res.status(201).json(category);
 });
 
 app.get("/categories/:id", (req, res) => {
@@ -142,18 +151,6 @@ app.delete("/categories/:id", (req, res) => {
   });
 });
 
-app.post("/categories", (req, res) => {
-  const category = {
-    id: randomUUID(),
-    ...req.body,
-};
-  categories.push(category);
-  res.status(201).json(category);
-});
-
-
-
-
 //========PRODUCTS========
 app.get("/products", (req, res) => {
   res.status(200).json(products);
@@ -179,6 +176,44 @@ app.get("/products/:id", (req, res) => {
     }
 
     res.status(200).json(product);
+});
+
+app.put("/products/:id", (req, res) => {
+    const product = products.find((product) => {
+        return product.id === Number(req.params.id);
+    });
+    if(!product){
+        return res.status(404).json({
+            message: "Produto não encontrado."
+        });
+    }
+
+
+    product.categoryId = req.body.categoryId
+    product.name = req.body.name
+    product.description = req.body.description
+    product.price = req.body.price
+
+
+    res.status(200).json(product);
+});
+
+app.delete("/categories/:id", (req, res) => {
+   const product = products.find((product) => {
+        return product.id === Number(req.params.id);
+    });
+    if(!product){
+        return res.status(404).json({
+            message: "Produto não encontrado."
+        });
+    }
+
+  const index = products.indexOf(product);
+  products.splice(index, 1);
+
+  res.status(200).json({
+    message: "Produto removido com sucesso."
+  });
 });
 //========================
 
