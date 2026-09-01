@@ -1,8 +1,8 @@
 import express from "express";
 import { randomUUID } from "node:crypto";
+import supabase from "./config/supabase.js"
 
 const app = express();
-
 app.use(express.json());
 
 const pizzaCategoryId = randomUUID();
@@ -10,28 +10,22 @@ const drinkCategoryId = randomUUID();
 
 const categories = [
   {
-    id: randomUUID(),
+    id: pizzaCategoryId,
     name: "Pizzas",
     description:
       "Pizzas salgadas com diferentes sabores, tamanhos e combinações de ingredientes.",
   },
   {
-    id: randomUUID(),
+    id: drinkCategoryId,
     name: "Bebidas",
     description:
       "Bebidas para acompanhar as pizzas, incluindo refrigerantes, sucos e água.",
-  },
-  {
-    id: randomUUID(),
-    name: "Sobremesas",
-    description:
-      "Opções doces para finalizar a refeição, como pizzas doces, sorvetes e sobremesas especiais.",
   },
 ];
 
 const products = [
   {
-    id: 1,
+    id: randomUUID(),
     categoryId: pizzaCategoryId,
     name: "Calabresa",
     description:
@@ -39,7 +33,7 @@ const products = [
     price: 45.9,
   },
   {
-    id: 2,
+    id: randomUUID(),
     categoryId: pizzaCategoryId,
     name: "Frango com Catupiry",
     description:
@@ -47,7 +41,7 @@ const products = [
     price: 49.9,
   },
   {
-    id: 3,
+    id: randomUUID(),
     categoryId: pizzaCategoryId,
     name: "Margherita",
     description:
@@ -55,21 +49,21 @@ const products = [
     price: 44.9,
   },
   {
-    id: 4,
+    id: randomUUID(),
     categoryId: drinkCategoryId,
     name: "Coca-Cola 2L",
     description: "Refrigerante Coca-Cola em garrafa de 2 litros.",
     price: 12.9,
   },
   {
-    id: 5,
+    id: randomUUID(),
     categoryId: drinkCategoryId,
     name: "Suco de Laranja",
     description: "Suco natural de laranja, servido gelado.",
     price: 9.9,
   },
   {
-    id: 6,
+    id: randomUUID,
     categoryId: pizzaCategoryId,
     name: "Pizza de Chocolate",
     description: "Pizza doce com chocolate cremoso e granulado.",
@@ -77,8 +71,9 @@ const products = [
   },
 ];
 
-
-
+// ==========================
+// Root
+// ==========================
 app.get("/", (req, res) => {
   res.status(200).json({
     message: "Restaurant Ordering System API",
@@ -86,19 +81,11 @@ app.get("/", (req, res) => {
   });
 });
 
-
-
+// ==========================
+// Categories
+// ==========================
 app.get("/categories", (req, res) => {
-    res.status(200).json(categories);
-});
-
-app.post("/categories", (req, res) => {
-  const category = {
-    id: randomUUID(),
-    ...req.body,
-};
-  categories.push(category);
-  res.status(201).json(category);
+  res.status(200).json(categories);
 });
 
 app.get("/categories/:id", (req, res) => {
@@ -113,6 +100,15 @@ app.get("/categories/:id", (req, res) => {
   }
 
   res.status(200).json(category);
+});
+
+app.post("/categories", (req, res) => {
+  const category = {
+    id: randomUUID(),
+    ...req.body,
+  };
+  categories.push(category);
+  res.status(201).json(category);
 });
 
 app.put("/categories/:id", (req, res) => {
@@ -147,11 +143,13 @@ app.delete("/categories/:id", (req, res) => {
   categories.splice(index, 1);
 
   res.status(200).json({
-    message: "Categoria removida com sucesso."
+    message: "Categoria removida com sucesso.",
   });
 });
 
-//========PRODUCTS========
+// ==========================
+// Products
+// ==========================
 app.get("/products", (req, res) => {
   res.status(200).json(products);
 });
@@ -159,62 +157,78 @@ app.get("/products", (req, res) => {
 app.post("/products", (req, res) => {
   const product = {
     id: randomUUID(),
-    ...req.body
+    ...req.body,
   };
   products.push(product);
   res.status(201).json(product);
 });
 
 app.get("/products/:id", (req, res) => {
-    const product = products.find((product) => {
-        return product.id === Number(req.params.id);
+  const product = products.find((product) => {
+    return product.id == req.params.id;
+  });
+  if (!product) {
+    return res.status(404).json({
+      message: "Produto não encontrado.",
     });
-    if(!product){
-        return res.status(404).json({
-            message: "Produto não encontrado."
-        });
-    }
-
-    res.status(200).json(product);
+  }
+  res.status(200).json(product);
 });
 
 app.put("/products/:id", (req, res) => {
-    const product = products.find((product) => {
-        return product.id === Number(req.params.id);
+  const product = products.find((product) => {
+    return product.id == req.params.id;
+  });
+  if (!product) {
+    return res.status(404).json({
+      message: "Produto não encontrado.",
     });
-    if(!product){
-        return res.status(404).json({
-            message: "Produto não encontrado."
-        });
-    }
+  }
 
+  product.categoryId = req.body.categoryId;
+  product.name = req.body.name;
+  product.description = req.body.description;
+  product.price = req.body.price;
 
-    product.categoryId = req.body.categoryId
-    product.name = req.body.name
-    product.description = req.body.description
-    product.price = req.body.price
-
-
-    res.status(200).json(product);
+  res.status(200).json(product);
 });
 
-app.delete("/categories/:id", (req, res) => {
-   const product = products.find((product) => {
-        return product.id === Number(req.params.id);
+app.delete("/products/:id", (req, res) => {
+  const product = products.find((product) => {
+    return product.id == req.params.id;
+  });
+  if (!product) {
+    return res.status(404).json({
+      message: "Produto não encontrado.",
     });
-    if(!product){
-        return res.status(404).json({
-            message: "Produto não encontrado."
-        });
-    }
+  }
 
   const index = products.indexOf(product);
   products.splice(index, 1);
 
   res.status(200).json({
-    message: "Produto removido com sucesso."
+    message: "Produto removido com sucesso.",
   });
 });
-//========================
+
+app.get("/test-supabase", async (req, res) => {
+  const { data, error } = await supabase.from("categories").select("*")
+
+  if(error){
+    console.log("Erro ao consultar base de dados.")
+
+    return res.status(500).json({
+      success: false,
+      message: "Erro ao consultar banco de dados Supabase.",
+      error: error.message,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Conexão realizada com sucesso!",
+    data,
+  });
+})
 
 export default app;
