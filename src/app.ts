@@ -50,6 +50,20 @@ app.post ("/categories", async (req, res) => {
   }
 });
 
+app.get("/categories/search/:keyword", async (req,res) => {
+  try {
+    const categories = await Category.findByKeyword(req.params.keyword);
+
+    res.status(200).json(categories)
+  } catch(error){
+    console.log("Erro ao pesquisar categorias: ", error)
+
+    res.status(404).json({
+      message: "Erro ao buscar categorias.",
+    })
+  }
+})
+
 app.delete("/categories/:id", async (req,res) => {
   try{
     const category = await Category.remove(req.params.id);
