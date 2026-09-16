@@ -2,6 +2,8 @@ import express from "express";
 import { randomUUID } from "node:crypto";
 import supabase from "./config/supabase.js";
 import Category from "./module/category.js";
+import findAll from "./module/category.js"
+import create from "./module/category.js"
 import Product from "./module/product.js";
 
 const app = express();
@@ -33,6 +35,36 @@ app.get("/categories", async (req, res) => {
     });
   }
 });
+
+app.post ("/categories", async (req, res) => {
+  try {
+    const category = await Category.create(req.body);
+
+    res.status(201).json(category);
+  } catch(error){
+    console.log("Erro ao criar categoria: ", error);
+
+    res.status(500).json({
+      message: "Erro ao criar categoria.",
+    });
+  }
+});
+
+app.delete("/categories/:id", async (req,res) => {
+  try{
+    const category = await Category.remove(req.params.id);
+
+    res.status(200).json({
+      message: "Categoria removido com sucesso.",
+    });
+  }catch(error){
+    console.log("Erro ao remover categoria: ", error);
+
+    res.status(404).json({
+      message: "Categoria não encontrada."
+    })
+  }
+})
 
 /*
 app.get("/categories/:id", (req, res) => {
