@@ -1,6 +1,6 @@
 import express from "express";
 import CategoryRouter from "./routers/CategoryRouter.js";
-
+import ProductRouter from "./routers/ProductRouter.js"
 
 const app = express();
 app.use(express.json());
@@ -14,5 +14,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/categories", CategoryRouter);
+app.use("/products", ProductRouter);
 
 export default app;
