@@ -1,117 +1,215 @@
 import type { Request, Response } from "express";
+import { Product } from "../models/product.js"
 import ProductRepository from "../repositories/ProductRepository.js";
+import { ValidationError } from "../errors/ValidationError.js";
+import { NotFoundError } from "../errors/NotFoundError.js";
 
-async function findAll(req:Request, res:Response) {
+async function getAll(req: Request, res: Response) {
     try {
-        try {
-            const product = await ProductRepository.findAll();
+        const products = await ProductRepository.findAll();
 
-            res.status(200).json(product);
-        } catch (error) {
-            console.log("Erro ao buscar produto: ");
-
-            res.status(404).json({
-                message: "Erro ao buscar produto: ",
-            });
-        }
+        return res.status(200).json(products);
     } catch (error) {
+        console.error("Erro ao buscar produtos:", error);
 
+        return res.status(500).json({
+            message: "Erro ao buscar produtos.",
+        });
     }
 }
 
-async function findById(req:Request<{ id:string }>, res:Response) {
+async function getById(req: Request<{ id: string }>, res: Response) {
     const { id } = req.params;
 
     if (!id) {
         return res.status(400).json({
             message: "ID do produto não informado.",
         });
-    } try {
+    }
+
+    try {
         const product = await ProductRepository.findById(id);
 
-        res.status(200).json(product);
+        return res.status(200).json({
+            id: product.getId(),
+            category_id: product.getCategoryId(),
+            title: product.getTitle(),
+            description: product.getDescription(),
+            price: product.getPrice(),
+            image: product.getImage(),
+            available: product.isAvailable(),
+            active: product.isActive(),
+        });
     } catch (error) {
-        console.log("Erro ao buscar produto: ", error);
+        console.error("Erro ao buscar produto:", error);
 
-        res.status(404).json({
-            message: "Erro ao buscar produto.",
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({
+                message: error.message,
+            });
+        }
+
+        return res.status(500).json({
+            message: "Erro interno ao buscar produto.",
         });
     }
 }
 
-async function create(req:Request, res:Response) {
+async function search(req: Request, res: Response) {
+    const { keyword } = req.query;
+
+    if (!keyword || typeof keyword !== "string") {
+        return res.status(400).json({
+            message: "Palavra-chave não informada.",
+        });
+    }
+
     try {
-        const product = await ProductRepository.create(req.body);
+        const products = await ProductRepository.searchByKeyword(keyword);
 
-        res.status(201).json(product);
+        return res.status(200).json(products);
     } catch (error) {
-        console.log("Erro ao criar produto: ", error);
+        console.error("Erro ao pesquisar produtos:", error);
 
-        res.status(500).json({
-            message: "Erro ao criar produto.",
+        return res.status(500).json({
+            message: "Erro ao pesquisar produtos.",
         });
     }
 }
 
-async function update(req:Request<{ id:string }>, res:Response) {
+async function create(req: Request, res: Response) {
+    const { category_id, title, price, description, image } = req.body;
+
+    try {
+        const product = new Product(category_id, title, price, description, image);
+
+        const createdProduct = await ProductRepository.create(product);
+
+        return res.status(201).json(createdProduct);
+    } catch (error) {
+        console.error("Erro ao criar produto:", error);
+
+        if (error instanceof ValidationError) {
+            return res.status(400).json({
+                message: error.message,
+            });
+        }
+
+        return res.status(500).json({
+            message: "Erro interno ao criar produto.",
+        });
+    }
+}
+
+async function update(req: Request<{ id: string }>, res: Response) {
     const { id } = req.params;
+    const { category_id, title, price, description, image, available, active } =
+        req.body;
 
     if (!id) {
-        return res.status(400).json({
-            message: "Id do produto não informado.",
-        });
-    }
-
-    const { name, description, icon, active } = req.body;
-    const changes = { name, description, icon, active };
-    const hasChanges = Object.values(changes).some((value) => value !== undefined);
-
-    if (!hasChanges) {
-        return res.status(400).json({
-            message: "Informe ao menos um campo para atualizar.",
-        });
-    }
-
-    try {
-        const product = await ProductRepository.update(id, changes);
-        return res.status(200).json(product);
-    } catch (error) {
-        console.error("Erro ao atualizar produto:", error);
-        return res.status(404).json({
-            message: "Produto não encontrado.",
-        });
-    }
-}
-
-async function remove(req: Request<{id: string}>, res: Response){
-    const { id } = req.params;
-
-    if (!id){
         return res.status(400).json({
             message: "ID do produto não informado.",
         });
     }
 
-    try{
-        const product = await ProductRepository.remove(id);
+    try {
+        const product = await ProductRepository.findById(id);
 
-        res.status(200).json({
+        if (category_id !== undefined) {
+            product.changeCategory(category_id);
+        }
+
+        if (title !== undefined) {
+            product.rename(title);
+        }
+
+        if (price !== undefined) {
+            product.changePrice(price);
+        }
+
+        if (description !== undefined) {
+            product.changeDescription(description);
+        }
+
+        if (image !== undefined) {
+            product.changeImage(image);
+        }
+
+        if (available === true) {
+            product.makeAvailable();
+        }
+
+        if (available === false) {
+            product.makeUnavailable();
+        }
+
+        if (active === true) {
+            product.activate();
+        }
+
+        if (active === false) {
+            product.deactivate();
+        }
+
+        const updatedProduct = await ProductRepository.update(product);
+
+        return res.status(200).json(updatedProduct);
+    } catch (error) {
+        console.error("Erro ao atualizar produto:", error);
+
+        if (error instanceof ValidationError) {
+            return res.status(400).json({
+                message: error.message,
+            });
+        }
+
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({
+                message: error.message,
+            });
+        }
+
+        return res.status(500).json({
+            message: "Erro interno ao atualizar produto.",
+        });
+    }
+}
+
+async function remove(req: Request<{ id: string }>, res: Response) {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            message: "ID do produto não informado.",
+        });
+    }
+
+    try {
+        await ProductRepository.remove(id);
+
+        return res.status(200).json({
             message: "Produto removido com sucesso.",
         });
-    } catch(error){
-        console.log("Erro ao remover produto.", error);
+    } catch (error) {
+        console.error("Erro ao remover produto:", error);
 
-        res.status(404).json({
-            message: "Produto não encontrado.",
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({
+                message: error.message,
+            });
+        }
+
+        return res.status(500).json({
+            message: "Erro interno ao remover produto.",
         });
     }
 }
 
 export default {
-    findAll,
-    findById,
+    getAll,
+    getById,
+    search,
     create,
-	update,
-	remove,
+    update,
+    remove,
 };
-

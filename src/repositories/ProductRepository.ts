@@ -1,79 +1,141 @@
 import supabase from "../config/supabase.js";
-import { Product } from "../models/product.js"
+import { Product } from "../models/product.js";
+import { NotFoundError } from "../errors/NotFoundError.js";
+import { ValidationError } from "../errors/ValidationError.js";
 
 async function findAll() {
-  const { data, error } = await supabase.from("products").select("*");
+    const { data, error } = await supabase.from("products").select("*");
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+        throw error;
+    }
 
-  return data;
+    return data;
+}
+
+async function findById(id: string): Promise<Product> {
+    const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+    if (error) {
+        throw error;
+    }
+
+    if (!data) {
+        throw new NotFoundError("Produto não encontrado.");
+    }
+
+    return Product.restore(
+        data.id,
+        data.category_id,
+        data.title,
+        data.price,
+        data.available,
+        data.active,
+        data.description ?? undefined,
+        data.image ?? undefined,
+    );
+}
+
+async function searchByKeyword(keyword: string) {
+    const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .or(`title.ilike.%${keyword}%,description.ilike.%${keyword}%`);
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
 }
 
 async function create(product: Product) {
-  const { data, error } = await supabase
-  .from("products")
-  .insert(product)
-  .select()
-  .single();
+    const { data, error } = await supabase
+        .from("products")
+        .insert({
+            category_id: product.getCategoryId(),
+            title: product.getTitle(),
+            description: product.getDescription(),
+            price: product.getPrice(),
+            image: product.getImage(),
+            available: product.isAvailable(),
+            active: product.isActive(),
+        })
+        .select()
+        .single();
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+        if (error.code === "23503") {
+            throw new ValidationError("A categoria informada não existe.");
+        }
 
-  return data;
+        throw error;
+    }
+
+    return data;
 }
 
-async function findById(id:string) {
-  const { data, error } = await supabase
-  .from("products")
-  .select("*")
-  .eq("id", id)
-  .single();
+async function update(product: Product) {
+    const id = product.getId();
 
-  if (error) {
-    throw error;
-  }
-  
-  return data;
-}
+    if (!id) {
+        throw new Error("Produto sem ID não pode ser atualizado.");
+    }
 
+    const { data, error } = await supabase
+        .from("products")
+        .update({
+            category_id: product.getCategoryId(),
+            title: product.getTitle(),
+            description: product.getDescription(),
+            price: product.getPrice(),
+            image: product.getImage(),
+            available: product.isAvailable(),
+            active: product.isActive(),
+        })
+        .eq("id", id)
+        .select()
+        .maybeSingle();
 
-async function update(id: string, product: Partial<Product>) {
-  const { data, error } = await supabase
-    .from("products")
-    .update(product)
-    .eq("id", id)
-    .select()
-    .single();
+    if (error) {
+        throw error;
+    }
 
-  if (error) {
-    throw error;
-  }
+    if (!data) {
+        throw new NotFoundError("Produto não encontrado.");
+    }
 
-  return data;
+    return data;
 }
 
 async function remove(id: string) {
-  const { data, error } = await supabase
-    .from("products")
-    .delete()
-    .eq("id", id)
-    .select()
-    .single();
+    const { data, error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", id)
+        .select()
+        .maybeSingle();
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+        throw error;
+    }
 
-  return data;
+    if (!data) {
+        throw new NotFoundError("Produto não encontrado.");
+    }
+
+    return data;
 }
 
 export default {
-  findAll,
-  findById,
-  create,
-  update,
-  remove,
+    findAll,
+    findById,
+    searchByKeyword,
+    create,
+    update,
+    remove,
 };
