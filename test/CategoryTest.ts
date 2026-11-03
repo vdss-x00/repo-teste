@@ -22,5 +22,17 @@ describe ("Category - Testes Unitários", () => {
         expect(category.getIcon()).toBe("");
         expect(category.isActive()).toBe(true);
         expect(category.getId()).toBeUndefined();
-    })
+    });
+
+
+    it("não deve permitir criar uma categoria sem nome", () => {
+        const name = "";
+        const display_order = 1;
+
+        expect(() => {
+            new Category(name, display_order);
+        }).toThrow("O nome da categoria é obrigatório.");
+    });
+
+    
 });
