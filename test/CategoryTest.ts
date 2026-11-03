@@ -16,11 +16,11 @@ describe ("Category - Testes Unitários", () => {
             icon
         );
 
-        expect(category.getName()).toBe("");
-        expect(category.getDisplayOrder()).toBe("");
-        expect(category.getDescription()).toBe("");
+        expect(category.getName()).toBe("Pizza");
+        expect(category.getDisplayOrder()).toBe(1);
+        expect(category.getDescription()).toBe("Categoria de Pizza");
         expect(category.getIcon()).toBe("");
-        expect(category.isActive()).toBe("");
-        expect(category.getId()).toBe("");
+        expect(category.isActive()).toBe(true);
+        expect(category.getId()).toBeUndefined();
     })
 });
