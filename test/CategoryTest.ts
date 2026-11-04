@@ -34,5 +34,13 @@ describe ("Category - Testes Unitários", () => {
         }).toThrow("O nome da categoria é obrigatório.");
     });
 
-    
+
+    it("não permitir a criação de categoria com nome sem caracteres", () => {
+        {/*Código vai aqui, a ser acrescentado depois*/}
+    });
+
+    it("deve remover os espaços antes e depois do nome de uma categoria", () => {
+        {/*Código vai aqui, a ser acrescentado depois*/}
+    });
+
 });
