@@ -60,4 +60,34 @@ describe("Category - teste de integração", () => {
             active: true
         });
     });
+
+    it("deve consultar uma categoria existente por id", async () => {
+        const { id, data } = await createCategory();
+
+        const response = await request(app).get(`/categories/${id}`);
+
+        expect(response.status).toBe(201);
+        expect(response.body).toMatchObject({
+            id,
+            ...data,
+            active: true
+        });
+    }, 20_000);
+
+
+    it("deve buscar uma categoria por palavra-chave", async () => {
+        const { id, data } = await createCategory();
+
+        const response = await request(app).get(`/categories/search/${encodeURIComponent(data.name)}`);
+
+        expect(response.status).toBe(201);
+        expect(response.body).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id,
+                    name: data.name,
+                }),
+            ]),
+        );
+    }, 20_000);
 })
