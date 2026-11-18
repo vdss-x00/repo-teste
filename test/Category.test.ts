@@ -1,147 +1,180 @@
-import { randomUUID } from "node:crypto";
-import { afterEach, describe, expect, it } from "vitest";
-import request from "supertest";
-import app from "../src/app.js";
-import supabase from "../src/config/supabase.js";
+import { describe, it, expect } from "vitest";
+import { Category } from "../src/models/category.js";
 
-describe("Category - Testes de integração", () => {
-  const testNames: string[] = [];
+describe("Category - Testes unitários", () => {
+  it("deve criar uma categoria válida", () => {
+    const name = "Pizzas";
+    const display_order = 1;
+    const description = "Categoria de pizzas";
+    const icon = "🍕";
 
-  function makeCategoryData() {
-    const name = `Teste integração ${randomUUID()}`;
+    const category = new Category(name, display_order, description, icon);
 
-    testNames.push(name);
+    expect(category.getName()).toBe("Pizzas");
+    expect(category.getDisplayOrder()).toBe(1);
+    expect(category.getDescription()).toBe("Categoria de pizzas");
+    expect(category.getIcon()).toBe("🍕");
+    expect(category.isActive()).toBe(true);
+    expect(category.getId()).toBeUndefined();
+  });
 
-    return {
+  it("não deve permitir criar uma categoria sem nome", () => {
+    const name = "";
+    const display_order = 1;
+
+    expect(() => {
+      new Category(name, display_order);
+    }).toThrow("O nome da categoria é obrigatório.");
+  });
+
+  it("não deve permitir criar uma categoria com nome contendo apenas espaços", () => {
+    const name = "        ";
+    const display_order = 1;
+
+    expect(() => {
+      new Category(name, display_order);
+    }).toThrow("O nome da categoria é obrigatório.");
+  });
+
+  it("deve remover o espaço antes e depois do nome de uma categoria", () => {
+    const name = "   Pizzas   ";
+    const display_order = 1;
+
+    const category = new Category(name, display_order);
+
+    expect(category.getName()).toBe("Pizzas");
+  });
+
+  it("não deve permitir ordem de exibição negativa", () => {
+    const name = "Pizzas";
+    const display_order = -1;
+
+    expect(() => {
+      new Category(name, display_order);
+    }).toThrow(
+      "A ordem de exibição deve ser um número inteiro maior ou igual a zero.",
+    );
+  });
+
+  it("não deve ordem de exibição decimal", () => {
+    const name = "Pizzas";
+    const display_order = 1.5;
+
+    expect(() => {
+      new Category(name, display_order);
+    }).toThrow(
+      "A ordem de exibição deve ser um número inteiro maior ou igual a zero.",
+    );
+  });
+
+  it("deve permitir ordem de exibição igual a zero", () => {
+    const name = "Pizzas";
+    const display_order = 0;
+
+    const category = new Category(name, display_order);
+
+    expect(category.getDisplayOrder()).toBe(0);
+  });
+
+  it("deve permitir renomear uma categoria existente", () => {
+    const category = new Category("Pizzas", 1);
+
+    category.rename("Bebidas");
+
+    expect(category.getName()).toBe("Bebidas");
+  });
+
+  it("deve preservar o nome original após uma tentativa inválida de renomeação", () => {
+    const category = new Category("Pizzas", 1);
+
+    expect(() => {
+      category.rename("");
+    }).toThrow("O nome da categoria é obrigatório.");
+
+    expect(category.getName()).toBe("Pizzas");
+  });
+
+  it("deve permitir desativar e reativar uma categoria", () => {
+    const category = new Category("Pizzas", 1);
+
+    expect(category.isActive()).toBe(true); //opcional
+
+    category.deactivate();
+    expect(category.isActive()).toBe(false);
+
+    category.activate();
+    expect(category.isActive()).toBe(true);
+  });
+
+  it("deve restaura uma categoria existente", () => {
+    const id = "44ec31af-a216-4b49-a112-e51e3187378c";
+    const name = "Pizzas";
+    const display_order = 1;
+    const active = false;
+    const description = "Categoria de pizzas";
+    const icon = "🍕";
+
+    const category = Category.restore(
+      id,
       name,
-      display_order: 1,
-      description: "Categoria criada pelo teste de integração",
-      icon: "🍕",
-    };
-  }
+      display_order,
+      active,
+      description,
+      icon,
+    );
 
-  async function createCategory() {
-    const data = makeCategoryData();
-
-    const response = await request(app).post("/categories").send(data);
-
-    expect(response.status).toBe(201);
-    expect(response.body.id).toEqual(expect.any(String));
-
-    return {
-      id: response.body.id as string,
-      data,
-    };
-  }
-
-  afterEach(async () => {
-    const names = testNames.slice(0);
-
-    if (names.length === 0) {
-      return;
-    }
-
-    const { error } = await supabase
-      .from("categories")
-      .delete()
-      .in("name", names); //possível problema...
-
-    if (error) {
-      throw new Error(`Falha ao limpar categorias do teste: ${error.message}`);
-    }
+    expect(category.getId()).toBe("44ec31af-a216-4b49-a112-e51e3187378c");
+    expect(category.getName()).toBe("Pizzas");
+    expect(category.getDisplayOrder()).toBe(1);
+    expect(category.isActive()).toBe(false);
+    expect(category.getDescription()).toBe("Categoria de pizzas");
+    expect(category.getIcon()).toBe("🍕");
   });
 
-  it("deve criar uma categoria válida", async () => {
-    const data = makeCategoryData();
+  it("deve permitir alterar a descrição de uma categoria existente", () => {
+    const category = new Category(
+      "Pizzas",
+      1,
+      "Categoria de pizzas tradicionais",
+    );
 
-    const response = await request(app).post("/categories").send(data);
+    category.changeDescription("Categoria de pizzas tradicionais e especiais");
 
-    expect(response.status).toBe(201);
-    expect(response.body.id).toEqual(expect.any(String));
-    expect(response.body).toMatchObject({
-      ...data,
-      active: true,
-    });
+    expect(category.getDescription()).toBe(
+      "Categoria de pizzas tradicionais e especiais",
+    );
   });
 
-  it("deve listar as categorias inclusive a categoria criada", async () => {
-    const { id, data } = await createCategory();
-
-    const response = await request(app).get("/categories");
-
-    expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id,
-          name: data.name,
-        }),
-      ]),
-    );
-  }, 20_000);
-
-  it("deve consultar uma categoria existente pelo ID", async () => {
-    const { id, data } = await createCategory();
-
-    const response = await request(app).get(`/categories/${id}`);
-
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({
-      id,
-      ...data,
-      active: true,
-    });
-  }, 20_000);
-
-  it("deve buscar uma categoria por palavra-chave", async () => {
-    const { id, data } = await createCategory();
-
-    const response = await request(app).get(
-      `/categories/search/${encodeURIComponent(data.name)}`,
+  it("deve permitir alterar o ícone de uma categoria existente", () => {
+    const category = new Category(
+      "Pizzas",
+      1,
+      "Categoria de pizzas tradicionais",
+      "🍕",
     );
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id,
-          name: data.name,
-        }),
-      ]),
+    category.changeIcon("🥤");
+
+    expect(category.getIcon()).toBe("🥤");
+  });
+
+  it("deve permitir alterar a ordem de exibição de uma categoria existente", () => {
+    const category = new Category("Pizzas", 1);
+
+    category.changeDisplayOrder(5);
+
+    expect(category.getDisplayOrder()).toBe(5);
+  });
+
+  it("deve preservar a ordem de exibição original após uma alteração inválida", () => {
+    const category = new Category("Pizzas", 1);
+
+    expect(() => {
+      category.changeDisplayOrder(-5);
+    }).toThrow(
+      "A ordem de exibição deve ser um número inteiro maior ou igual a zero.",
     );
-  }, 20_000);
 
-  it("deve remover uma categoria existente", async () => {
-    const { id } = await createCategory();
-
-    const response = await request(app).delete(`/categories/${id}`);
-
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      message: "Categoria removida com sucesso!",
-    });
-  }, 20_000);
-
-  it("deve atualizar os dados de uma categoria existente", async () => {
-    const { id } = await createCategory();
-
-    const updateData = {
-      ...makeCategoryData(),
-      description: "Descrição atualizada pelo teste.",
-      icon: "🍰",
-      display_order: 5,
-      active: false,
-    };
-
-    const response = await request(app)
-      .put(`/categories/${id}`)
-      .send(updateData);
-
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({
-      id,
-      ...updateData,
-    });
-  }, 20_000);
+    expect(category.getDisplayOrder()).toBe(1);
+  });
 });
