@@ -11,6 +11,10 @@ const options: swaggerJSDoc.Options = {
         },
         servers: [
             {
+                url: "/",
+                description: "Servidor atual (local ou Vercel)",
+            },
+            {
                 url: "http://localhost:3000",
                 description: "Development server",
             },
@@ -91,7 +95,7 @@ const options: swaggerJSDoc.Options = {
         }
     },
 
-    apis: ["./src/routes/*.ts"],
+    apis: ["./src/routes/*.ts", "./dist/routes/*.js"],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
