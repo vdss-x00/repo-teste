@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Category } from "../src/models/category.js";
+import { Category } from "../src/models/category.ts";
 
 describe("Category - Testes unitários", () => {
   it("deve criar uma categoria válida", () => {

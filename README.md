@@ -15,6 +15,8 @@
  - [Tabelas do Banco de Dados](#tabelas-do-banco-de-dados)
  - [Endpoints](#endpoints)
  - [Exemplos de Requisições](#exemplos-de-requisições)
+ - [Testes Automatizados](#testes-automatizados)
+ - [Documentação Swagger](#documentação-swagger)
 
 
 ## Nome do Aluno
@@ -24,7 +26,7 @@
 
 Essa APS consiste na entrega de uma API RESTful de sistema de restaurantes desenvolvida em aula pelos alunos.
 
-Com essa APS, os alunos aprenderam mais sobre operações CRUD, estrutura de APIs RESTful, métodos HTTP e endpoints, variáveis de ambiente, banco de dados, e ente outros.
+Com essa APS, os alunos aprenderam mais sobre operações CRUD, estrutura de APIs RESTful, métodos HTTP e endpoints, variáveis de ambiente, banco de dados, pipelines CI/CD, testes automatizados, e entre outros.
 
 [Voltar ao Índice](#índice)
 
@@ -36,6 +38,10 @@ Com essa APS, os alunos aprenderam mais sobre operações CRUD, estrutura de API
 - Express.js
 - Postman
 - Git
+- Vitest
+- Supertest
+- GitHub Actions
+- Vercel
 
 
 [Voltar ao Índice](#índice)
@@ -52,22 +58,47 @@ Uma categoria pode ter vários produtos, mas um produto pertence a apenas uma ca
 ## Estrutura do Projeto
 
 ```text
+.github/
+├── workflows/
+public/
+├── api-docs/
+scripts/
+|
 src/
 ├── config/
 ├── controllers/
+├── errors/
 ├── models/
 ├── repositories/
 ├── routers/
 ├── app.ts
+├── copia_server.ts
 └── server.ts
 supabase/
 ├── schema.sql
+test/
+|
 ```
 
 
 [Voltar ao Índice](#índice)
+
+## Regras de Negócio
+
+Principais regras de negócio do projeto, separadas pelos componentes principais e em poucas palavras:
+
+- `Categorias`: Nome obrigatório e não vazio; ordem de exibição deve ser um número inteiro maior ou igual a zero. Descrição e ícone são opcionais. Uma categoria pode ser ativada ou desativada.
+
+- `Produtos`: Devem estar associados a uma categoria existente, identificada por UUID. Título é obrigatório e não pode ser vazio; preço deve ser um número maior ou igual a zero. Descrição e imagem são opcionais. Disponibilidade e status ativo podem ser alterados independentemente.
+
+- `Validações gerais`: UUIDs, campos obrigatórios, tamanhos máximos e limites de valores são obrigatoriamente respeitados. Campos opcionais não precisam ser enviados nas atualizações.
+
+[Voltar ao Índice](#índice)
+
 ## Configuração e Execução
 >Pré-requisito: Ter um projeto ativo no Supabase
+
+A API já está disponível para testes e avaliação através do link Vercel disponível na seção `About` deste repositório. Mas, se desejar rodar a API na sua própria máquina com seu próprio banco Supabase, siga os passos abaixo.
 
 Antes de rodar `git clone`, vá ao editor SQL do seu projeto e copie e cole o código presente no arquivo `schema.sql`, clique em salvar e depois em `run`, para executar o código e criar as tabelas necessárias.
 
@@ -142,6 +173,7 @@ Há duas tabelas usadas no projeto:
 [Voltar ao Índice](#índice)
 ## Endpoints
 
+### categories
 | Método |  Rota  | Descrição |
 | :------ | :------: | :--------- |
 |  `GET` |   `/categories`  | Lista todas as categorias registradas |
@@ -150,6 +182,10 @@ Há duas tabelas usadas no projeto:
 | `POST` |`/categories`     | Registra uma categoria nova |
 | `PUT`  | `/categories/:id`| Atualiza uma categoria registrada (selecionada pelo id) |
 | `DELETE`| `/categories/:id`| Remove uma categoria (selecionada pelo id) |
+
+### products
+| Método |  Rota  | Descrição |
+| :------ | :------: | :--------- |
 |  `GET` |   `/products`  | Lista todas os produtos registrados |
 |  `GET` | `/products/:id`| Lista um produto específico pelo seu id|
 | `POST` |`/products`     | Registra um produtos novo |
@@ -239,5 +275,62 @@ Resultado:
 
 Para completar o ciclo de CRUD, efetue uma operação DELETE no endpoint `/products/:id` para remover a campanha que você registrou.
 
+
+[Voltar ao Índice](#índice)
+
+## Testes Automatizados
+
+Neste projeto, é possível rodar uma suíte de testes unitários e de integração através das ferramentas `Vitest` e `Supertest`, respectivamente.
+
+Os arquivos de teste são organizados da seguinte maneira:
+```text
+test/
+├── Category.integration.test.ts
+├── Category.test.ts
+├── Product.integration.test.ts
+├── Product.test.ts
+```
+
+Para rodar a suíte, rode um destes três comandos no terminal:
+
+
+Para rodar os testes uma única vez:
+```bash
+npm test
+```
+
+Para rodar os testes em modo de monitoramento (watch mode), em que roda os testes automaticamente após mudanças no código:
+```bash
+npm run test:watch
+```
+
+Para rodar os testes e gerar um relatório de cobertura de código:
+```bash
+npm run test:coverage
+```
+
+Ao rodar `npm run test:coverage`, se todos os testes forem bem-sucedidos, será gerado um relatório de cobertura de código dos arquivos de teste
+
+Exemplo de relatório de cobertura de código:
+```text
+File           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+---------------|---------|----------|---------|---------|-------------------
+All files      |     100 |      100 |     100 |     100 |                   
+ category.d.ts |       0 |        0 |       0 |       0 |                   
+ category.ts   |     100 |      100 |     100 |     100 |                   
+ product.d.ts  |       0 |        0 |       0 |       0 |                   
+ product.ts    |     100 |      100 |     100 |     100 |                   
+---------------|---------|----------|---------|---------|-------------------
+```
+
+[Voltar ao Índice](#índice)
+
+## Documentação Swagger
+
+Como mencionado anteriormente nesse documento, a API está disponível para avaliação e testes por meio do link Vercel disponível na seção `About` deste repositório.
+
+Nesse link, há a documentação Swagger, utilizando Swagger UI, em que é possível realizar os mesmos testes antes feitos através da plataforma Postman.
+
+Também é possível consultar os endpoints disponíveis, junto de exemplos em formato JSON de operações em cada endpoint e o schema de cada entidade envolvida.
 
 [Voltar ao Índice](#índice)
