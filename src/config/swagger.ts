@@ -1,4 +1,3 @@
-import { format } from "node:path";
 import swaggerJSDoc from "swagger-jsdoc";
 
 const options: swaggerJSDoc.Options = {
@@ -82,6 +81,30 @@ const options: swaggerJSDoc.Options = {
                         active: { type: "boolean", example: true },
                     },
                 },
+                Product: {
+                    type: "object",
+                    properties: {
+                        id: { type: "string", format: "uuid", readonly: true },
+                        category_id: { type: "string", format: "uuid" },
+                        title: { type: "string", example: "Pizza Margherita" },
+                        description: { type: "string", example: "Pizza com tomate e queijo" },
+                        price: { type: "number", format: "float", example: 65 },
+                        image: { type: "string", nullable: true, example: "" },
+                        available: { type: "boolean", example: true },
+                        active: { type: "boolean", example: true },
+                    },
+                },
+                CreateProduct: {
+                    type: "object",
+                    required: ["category_id", "title", "price"],
+                    properties: {
+                        category_id: { type: "string", format: "uuid" },
+                        title: { type: "string", example: "Pizza Margherita" },
+                        description: { type: "string", example: "Pizza com tomate e queijo" },
+                        price: { type: "number", format: "float", example: 65 },
+                        image: { type: "string", example: "" },
+                    },
+                },
                 Error: {
                     type: "object",
                     properties: {
@@ -95,7 +118,7 @@ const options: swaggerJSDoc.Options = {
         }
     },
 
-    apis: ["./src/routes/*.ts", "./dist/routes/*.js"],
+    apis: ["./src/routers/*.ts", "./dist/routers/*.js"],
 };
 
 const swaggerSpec = swaggerJSDoc(options);

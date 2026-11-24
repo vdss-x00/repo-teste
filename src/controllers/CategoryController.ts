@@ -169,7 +169,7 @@ async function remove(req: Request<{ id: string }>, res: Response) {
 }
 
 async function getByKeyword(req: Request<{ keyword: string }>, res: Response) {
-  const { keyword } = req.params;
+  const keyword = req.query.keyword;
 
   if (!keyword || typeof keyword != "string") {
     return res.status(400).json({

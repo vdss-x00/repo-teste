@@ -9,13 +9,21 @@ app.use(express.json());
 
 
 app.get("/", (req, res) => {
-    res.redirect("/api-docs");
+    res.redirect("/api-docs/");
+});
+
+app.get(/^\/api-docs$/, (req, res) => {
+    res.redirect(308, "/api-docs/");
 });
 
 app.use(
     "/api-docs",
     swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec),
+    swaggerUi.setup(swaggerSpec, {
+        swaggerOptions: {
+            tryItOutEnabled: true,
+        },
+    }),
 );
 
 app.use("/categories", CategoryRouter);
