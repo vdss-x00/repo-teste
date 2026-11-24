@@ -1,10 +1,20 @@
 import express from "express";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import CategoryRouter from "./routers/CategoryRouter.js";
 import ProductRouter from "./routers/ProductRouter.js"
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 
 const app = express();
+const generatedSwaggerSpecPath = fileURLToPath(
+    new URL("../public/api-docs/swagger.json", import.meta.url),
+);
+const apiSwaggerSpec =
+    process.env.VERCEL === "1" && existsSync(generatedSwaggerSpecPath)
+        ? JSON.parse(readFileSync(generatedSwaggerSpecPath, "utf8"))
+        : swaggerSpec;
+
 app.use(express.json());
 
 
@@ -17,17 +27,17 @@ app.get(/^\/api-docs$/, (req, res) => {
 });
 
 app.get("/swagger.json", (req, res) => {
-    res.status(200).json(swaggerSpec);
+    res.status(200).json(apiSwaggerSpec);
 });
 
 app.use(
     "/api-docs",
     express.static("public/api-docs", { index: false }),
     swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, {
+    swaggerUi.setup(apiSwaggerSpec, {
         swaggerOptions: {
             tryItOutEnabled: true,
-            spec: swaggerSpec,
+            spec: apiSwaggerSpec,
         },
     }),
 );

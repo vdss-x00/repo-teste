@@ -22,3 +22,9 @@ writeFileSync(
 };
 `,
 );
+
+const { default: swaggerSpec } = await import("../src/config/swagger.js");
+writeFileSync(
+    "public/api-docs/swagger.json",
+    JSON.stringify(swaggerSpec, null, 2),
+);
