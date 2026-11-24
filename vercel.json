@@ -1,7 +1,7 @@
 {
   "functions": {
     "src/app.ts": {
-      "includeFiles": "{node_modules/swagger-ui-dist/**,src/routers/**,src/config/**}"
+      "includeFiles": "{public/api-docs/**,src/routers/**,src/config/**}"
     }
   }
 }

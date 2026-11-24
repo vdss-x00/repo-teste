@@ -22,6 +22,7 @@ app.get("/swagger.json", (req, res) => {
 
 app.use(
     "/api-docs",
+    express.static("public/api-docs", { index: false }),
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
         swaggerOptions: {
